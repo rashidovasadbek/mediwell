@@ -1,4 +1,4 @@
-﻿using Mediwell.Api.Models;
+using Mediwell.Api.Models;
 using Mediwell.Api.Repasitories;
 
 namespace Mediwell.Api.Endpoints;
@@ -16,10 +16,23 @@ public static class ProductEndpoints
             return Results.Ok(products);
         });
 
-        // POST /products — yangi preparat qo'shish
-        group.MapPost("/", async (Product product, ProductRepository repo) =>
+        // GET /products/{id} — bitta preparat
+        group.MapGet("/{id:long}", async (long id, ProductRepository repo) =>
         {
-            var id = await repo.CreateAsync(product);
+            var product = await repo.GetByIdAsync(id);
+            return product is null
+                ? Results.NotFound(new { error = $"Preparat topilmadi: id={id}" })
+                : Results.Ok(product);
+        });
+
+        // POST /products — yangi preparat qo'shish
+        group.MapPost("/", async (CreateProductRequest req, ProductRepository repo) =>
+        {
+            var errors = req.Validate();
+            if (errors.Count > 0)
+                return Results.BadRequest(new { errors });
+
+            var id = await repo.CreateAsync(req);
             return Results.Created($"/products/{id}", new { id });
         });
     }
