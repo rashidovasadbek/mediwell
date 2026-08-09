@@ -482,3 +482,6 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+# Maxfiy sozlamalar (parol bor) — Git'ga tushmasin
+appsettings.Development.json
+appsettings.Production.json
