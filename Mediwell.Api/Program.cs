@@ -16,6 +16,7 @@ builder.Services.AddSingleton<DbConnectionFactory>();
 builder.Services.AddScoped<ProductRepository>();
 builder.Services.AddScoped<ReceiptRepository>();
 builder.Services.AddScoped<StockRepository>();
+builder.Services.AddScoped<AggregateRepository>();
 
 var connectionString = builder.Configuration.GetConnectionString("Default")
                        ?? throw new InvalidOperationException("Connection string 'Default' topilmadi.");
@@ -54,6 +55,7 @@ app.UseHttpsRedirection();
 app.MapProductEndpoints();
 app.MapReceiptEndpoints();
 app.MapStockEndpoints();
+app.MapAggregateEndpoints();
 
 app.Run();
 return 0;
