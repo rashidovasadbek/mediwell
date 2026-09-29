@@ -34,6 +34,20 @@ public static class AggregateEndpoints
             return ok ? Results.Ok(new { message = "Son tuzatildi" }) : Results.NotFound();
         });
         
+        // POST /aggregates/mediwell-arrive — skanerlangan kod naqddan rasmiyga (Mediwellga prixod)
+        group.MapPost("/mediwell-arrive", async (MediwellArriveRequest req, AggregateRepository repo) =>
+        {
+            var (ok, message) = await repo.MediwellArriveAsync(req.Code, req.UserId);
+            return ok ? Results.Ok(new { message }) : Results.BadRequest(new { error = message });
+        });
+        
+        // GET /aggregates/codes?status=cash yoki official — markirovka kodlarni holat bo'yicha ko'rish
+        group.MapGet("/codes", async (string? status, AggregateRepository repo) =>
+        {
+            var codes = await repo.GetCodesByStatusAsync(status);
+            return Results.Ok(codes);
+        });
+        
         
     }
     
@@ -46,6 +60,12 @@ public static class AggregateEndpoints
     public class CorrectCountRequest
     {
         public int NewCount { get; set; }
+        public long? UserId { get; set; }
+    }
+    
+    public class MediwellArriveRequest
+    {
+        public string Code { get; set; } = string.Empty;
         public long? UserId { get; set; }
     }
 }

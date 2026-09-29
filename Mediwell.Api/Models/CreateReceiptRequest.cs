@@ -9,7 +9,7 @@ public class CreateReceiptRequest
     // Kirim ma'lumoti
     public long ProductId { get; set; }
     public string Series { get; set; } = string.Empty;
-    public DateOnly ExpiryDate { get; set; }
+    public DateTime ExpiryDate { get; set; }
     public string? Supplier { get; set; }
     public string EntryMethod { get; set; } = "manual";
     public string? Note { get; set; }
@@ -61,6 +61,8 @@ public class CreateReceiptRequest
 
         return errors;
     }
+    
+    public List<string> UnitCodes { get; set; } = new();
 }
 
 public class AggregateInput

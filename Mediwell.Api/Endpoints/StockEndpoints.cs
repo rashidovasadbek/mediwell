@@ -14,5 +14,13 @@ namespace Mediwell.Api.Endpoints;
             var stock = await repo.GetStockAsync();
             return Results.Ok(stock);
         });
+        
+        // GET /stock/grouped — jamlangan qoldiq (bosganda ochiladi)
+        group.MapGet("/grouped", async (StockRepository repo) =>
+        {
+            var stock = await repo.GetGroupedStockAsync();
+            return Results.Ok(stock);
+        });
     }
+    
 }

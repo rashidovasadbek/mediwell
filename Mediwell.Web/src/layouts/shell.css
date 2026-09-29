@@ -1,0 +1,71 @@
+/* Admin va Sklad panellari uchun umumiy layout stillari.
+   Har bir panel o'z --accent va --side rangini beradi. */
+
+.shell { display: flex; min-height: 100vh; background: #f0f7f7; }
+
+.shell .sidebar {
+    width: 240px;
+    background: var(--side);
+    color: #fff;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.shell .logo {
+    padding: 22px 24px;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    border-bottom: 1px solid rgba(255, 255, 255, .12);
+}
+.shell .logo small {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, .6);
+    margin-top: 3px;
+}
+
+.shell .menu { padding: 8px 0; flex: 1; }
+.shell .menu a {
+    display: block;
+    padding: 13px 24px;
+    color: rgba(255, 255, 255, .8);
+    text-decoration: none;
+    font-size: 15px;
+    border-left: 3px solid transparent;
+}
+.shell .menu a:hover { background: rgba(255, 255, 255, .06); color: #fff; }
+.shell .menu a.router-link-active {
+    background: rgba(255, 255, 255, .10);
+    color: #fff;
+    border-left-color: var(--accent);
+    font-weight: 600;
+}
+
+.shell .user-box {
+    padding: 16px 20px;
+    border-top: 1px solid rgba(255, 255, 255, .12);
+}
+.shell .user-name { font-size: 14px; font-weight: 600; color: #fff; }
+.shell .user-role {
+    font-size: 11px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: 10px;
+}
+.shell .logout {
+    width: 100%;
+    padding: 8px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, .25);
+    color: rgba(255, 255, 255, .85);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+}
+.shell .logout:hover { background: rgba(255, 255, 255, .1); color: #fff; }
+
+.shell .content { flex: 1; padding: 32px 40px; overflow-y: auto; }

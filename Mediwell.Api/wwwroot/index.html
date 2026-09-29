@@ -1,0 +1,315 @@
+﻿<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mediwell — Sklad</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: system-ui, sans-serif; background: #f0f7f7; color: #1a2e30; display: flex; min-height: 100vh; }
+
+        /* SIDEBAR */
+        .sidebar { width: 240px; background: #01565e; color: #fff; padding: 0; flex-shrink: 0; display: flex; flex-direction: column; }
+        .sidebar .logo { padding: 22px 24px; font-size: 20px; font-weight: 700; letter-spacing: 1px; border-bottom: 1px solid rgba(255,255,255,.12); }
+        .sidebar .logo small { display: block; font-size: 11px; font-weight: 400; color: #8fd4cd; letter-spacing: .5px; margin-top: 3px; }
+        .nav { padding: 12px 0; flex: 1; }
+        .nav a { display: flex; align-items: center; gap: 12px; padding: 13px 24px; color: #cfe9e7; text-decoration: none; font-size: 15px; cursor: pointer; border-left: 3px solid transparent; }
+        .nav a:hover { background: rgba(255,255,255,.06); color: #fff; }
+        .nav a.active { background: rgba(255,255,255,.10); color: #fff; border-left-color: #02c39a; font-weight: 600; }
+        .nav a .ico { font-size: 18px; width: 22px; text-align: center; }
+
+        /* MAIN */
+        .main { flex: 1; padding: 32px 40px; overflow-y: auto; }
+        .page-title { font-size: 24px; font-weight: 700; margin-bottom: 6px; color: #1a2e30; }
+        .page-sub { font-size: 14px; color: #5b6f71; margin-bottom: 24px; }
+        .section { display: none; }
+        .section.active { display: block; }
+
+        /* CARD */
+        .card { background: #fff; border: 1px solid #d5e8e8; border-radius: 12px; padding: 22px; margin-bottom: 20px; max-width: 760px; }
+        .card h3 { color: #028090; font-size: 16px; margin-bottom: 14px; }
+        label { display: block; font-size: 13px; color: #5b6f71; margin: 10px 0 4px; }
+        input, select, textarea { width: 100%; padding: 9px 11px; border: 1px solid #d5e8e8; border-radius: 8px; font-size: 14px; font-family: inherit; background: #fff; }
+        textarea { font-family: monospace; resize: vertical; }
+        button { background: #028090; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-size: 14px; cursor: pointer; margin-top: 14px; font-weight: 500; }
+        button:hover { background: #01565e; }
+        button.sm { padding: 5px 12px; margin: 0; font-size: 13px; }
+        button.gray { background: #6b7f81; }
+        button.gray:hover { background: #566668; }
+        .hint { font-size: 13px; color: #5b6f71; margin-top: 8px; }
+
+        /* TABLE */
+        table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+        th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #eef3f3; font-size: 14px; }
+        th { color: #5b6f71; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
+        tr:hover td { background: #fafcfc; }
+        .mono { font-family: monospace; font-size: 12px; color: #364a4c; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 12px; font-weight: 600; }
+        .badge.arrived { background: #d7f5ee; color: #016b52; }
+        .badge.queued { background: #fdeecd; color: #8a5b00; }
+        .empty { color: #9bb0b1; font-size: 14px; padding: 20px 8px; }
+    </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="logo">MEDIWELL<small>Sklad boshqaruvi</small></div>
+    <nav class="nav">
+        <a data-section="kirim" class="active" onclick="showSection('kirim', this)"><span class="ico">➕</span> Kirim qilish</a>
+        <a data-section="kirimlar" onclick="showSection('kirimlar', this)"><span class="ico">📋</span> Kirimlar</a>
+        <a data-section="qoldiq" onclick="showSection('qoldiq', this)"><span class="ico">📊</span> Qoldiq</a>
+        <a data-section="preparat" onclick="showSection('preparat', this)"><span class="ico">💊</span> Preparatlar</a>
+    </nav>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+    <!-- KIRIM -->
+    <div class="section active" id="sec-kirim">
+        <div class="page-title">Yangi kirim (partiya)</div>
+        <div class="page-sub">Zavoddan kelgan agregat kodlarni tizimga kiriting</div>
+        <div class="card">
+            <h3>Kirim ma'lumotlari</h3>
+            <label>Preparat</label>
+            <select id="r-product"></select>
+            <label>Seriya raqami</label>
+            <input id="r-series" placeholder="Masalan: SER-2026-001">
+            <label>Amal qilish muddati</label>
+            <input id="r-expiry" type="date">
+            <label>Yetkazib beruvchi</label>
+            <input id="r-supplier" placeholder="Zavod / firma">
+            <label>Agregat kodlar (har qatorda bitta kod)</label>
+            <textarea id="r-codes" rows="7" placeholder="Skanerlab kiriting — har kod yangi qatorda"></textarea>
+            <div class="hint">Kodlar soni: <b id="r-count">0</b></div>
+            <button onclick="createReceipt()">Kirim qilish</button>
+        </div>
+    </div>
+
+    <!-- KIRIMLAR -->
+    <div class="section" id="sec-kirimlar">
+        <div class="page-title">Kirimlar ro'yxati</div>
+        <div class="page-sub">Kirimni tanlab, kodlarini ko'ring — prixod qiling yoki buzilganini tuzating</div>
+        <div class="card" style="max-width:900px;">
+            <table id="receipts-table">
+                <thead><tr><th>ID</th><th>Preparat</th><th>Seriya</th><th>Muddat</th><th></th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div class="card" id="detail-card" style="display:none; max-width:900px;">
+            <h3 id="detail-info">Kodlar</h3>
+            <table id="aggs-table">
+                <thead><tr><th>ID</th><th>Kod</th><th>Soni</th><th>Prixod</th><th>Firma</th><th></th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- QOLDIQ -->
+    <div class="section" id="sec-qoldiq">
+        <div class="page-title">Real-time qoldiq</div>
+        <div class="page-sub">Skladdagi har bir preparatdan qancha borligi — jonli</div>
+        <div class="card" style="max-width:900px;">
+            <button class="gray" onclick="loadStock()">Yangilash</button>
+            <table id="stock-table">
+                <thead><tr><th>Preparat</th><th>Seriya</th><th>Muddat</th><th>Holat</th><th>Karobka</th><th>Dona</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- PREPARATLAR -->
+    <div class="section" id="sec-preparat">
+        <div class="page-title">Preparatlar katalogi</div>
+        <div class="page-sub">Dorilar ro'yxati va yangi preparat qo'shish</div>
+        <div class="card">
+            <h3>Yangi preparat</h3>
+            <label>Nomi</label>
+            <input id="p-name" placeholder="Masalan: Analgin 500mg">
+            <label>Ishlab chiqaruvchi</label>
+            <input id="p-manufacturer" placeholder="Zavod nomi">
+            <label>Nominal sig'im (bitta karobkada nechta)</label>
+            <input id="p-capacity" type="number" value="40">
+            <button onclick="addProduct()">Qo'shish</button>
+        </div>
+        <div class="card">
+            <h3>Ro'yxat</h3>
+            <table id="products-table">
+                <thead><tr><th>ID</th><th>Nomi</th><th>Ishlab chiqaruvchi</th><th>Sig'im</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const API = "";
+    let productsCache = [];
+
+    // ---------- NAVIGATSIYA ----------
+    function showSection(name, el) {
+        document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+        document.getElementById("sec-" + name).classList.add("active");
+        document.querySelectorAll(".nav a").forEach(a => a.classList.remove("active"));
+        el.classList.add("active");
+        // bo'lim ochilganda ma'lumotni yangilash
+        if (name === "kirimlar") loadReceipts();
+        if (name === "qoldiq") loadStock();
+        if (name === "preparat") loadProducts();
+    }
+
+    // ---------- PREPARATLAR ----------
+    async function loadProducts() {
+        const res = await fetch(API + "/products");
+        productsCache = await res.json();
+        const tbody = document.querySelector("#products-table tbody");
+        tbody.innerHTML = "";
+        if (productsCache.length === 0) tbody.innerHTML = '<tr><td colspan="4" class="empty">Hozircha preparat yo\'q</td></tr>';
+        productsCache.forEach(p => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${p.id}</td><td>${p.name}</td><td>${p.manufacturer ?? "—"}</td><td>${p.nominalCapacity}</td>`;
+            tbody.appendChild(tr);
+        });
+        const sel = document.getElementById("r-product");
+        sel.innerHTML = "";
+        productsCache.forEach(p => {
+            const opt = document.createElement("option");
+            opt.value = p.id;
+            opt.textContent = p.name + " (sig'im: " + p.nominalCapacity + ")";
+            sel.appendChild(opt);
+        });
+    }
+
+    async function addProduct() {
+        const body = {
+            name: document.getElementById("p-name").value.trim(),
+            manufacturer: document.getElementById("p-manufacturer").value.trim(),
+            nominalCapacity: parseInt(document.getElementById("p-capacity").value) || 0
+        };
+        if (!body.name) { alert("Nomi kiritilmagan"); return; }
+        const res = await fetch(API + "/products", {
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body)
+        });
+        if (res.ok) {
+            document.getElementById("p-name").value = "";
+            document.getElementById("p-manufacturer").value = "";
+            loadProducts();
+        } else { alert("Xato: " + res.status); }
+    }
+
+    // ---------- KIRIM ----------
+    function countCodes() {
+        const codes = document.getElementById("r-codes").value.split("\n").map(c => c.trim()).filter(c => c);
+        document.getElementById("r-count").textContent = codes.length;
+    }
+
+    async function createReceipt() {
+        const productId = parseInt(document.getElementById("r-product").value);
+        const series = document.getElementById("r-series").value.trim();
+        const expiry = document.getElementById("r-expiry").value;
+        const supplier = document.getElementById("r-supplier").value.trim();
+        const codes = document.getElementById("r-codes").value.split("\n").map(c => c.trim()).filter(c => c)
+            .map(code => ({ code, arrivalStatus: "queued" }));
+
+        if (!productId) { alert("Preparat tanlanmagan"); return; }
+        if (!series) { alert("Seriya kiritilmagan"); return; }
+        if (!expiry) { alert("Muddat kiritilmagan"); return; }
+        if (codes.length === 0) { alert("Kod kiritilmagan"); return; }
+
+        const body = { productId, series, expiryDate: expiry + "T00:00:00", supplier, entryMethod: "manual", note: "", codes };
+        const res = await fetch(API + "/receipts", {
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body)
+        });
+        if (res.ok) {
+            const data = await res.json();
+            alert("Kirim qilindi! ID: " + data.receiptId + ", kodlar: " + data.codesAdded);
+            document.getElementById("r-series").value = "";
+            document.getElementById("r-codes").value = "";
+            document.getElementById("r-count").textContent = "0";
+        } else {
+            alert("Xato: " + res.status + "\n" + await res.text());
+        }
+    }
+
+    // ---------- KIRIMLAR ----------
+    async function loadReceipts() {
+        if (productsCache.length === 0) await loadProducts();
+        const res = await fetch(API + "/receipts");
+        const data = await res.json();
+        const tbody = document.querySelector("#receipts-table tbody");
+        tbody.innerHTML = "";
+        if (data.length === 0) tbody.innerHTML = '<tr><td colspan="5" class="empty">Hozircha kirim yo\'q</td></tr>';
+        data.forEach(r => {
+            const prod = productsCache.find(p => p.id === r.productId);
+            const prodName = prod ? prod.name : ("#" + r.productId);
+            const date = (r.expiryDate || "").substring(0, 10);
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${r.id}</td><td>${prodName}</td><td>${r.series}</td><td>${date}</td>
+                    <td><button class="sm gray" onclick="loadAggregates(${r.id}, '${r.series}')">Ko'rish</button></td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    async function loadAggregates(receiptId, series) {
+        const res = await fetch(API + "/aggregates/by-receipt/" + receiptId);
+        const data = await res.json();
+        document.getElementById("detail-card").style.display = "block";
+        document.getElementById("detail-info").textContent = "Kirim #" + receiptId + " (seriya: " + series + ") — " + data.length + " ta kod";
+        const tbody = document.querySelector("#aggs-table tbody");
+        tbody.innerHTML = "";
+        data.forEach(a => {
+            const badge = a.arrivalStatus === "arrived" ? '<span class="badge arrived">arrived</span>' : '<span class="badge queued">queued</span>';
+            const arriveBtn = a.arrivalStatus === "queued" ? `<button class="sm" onclick="markArrived(${a.id}, ${receiptId}, '${series}')">Prixod</button>` : "";
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${a.id}</td><td class="mono">${a.code}</td>
+                    <td><button class="sm gray" onclick="correctCount(${a.id}, ${a.actualCount}, ${receiptId}, '${series}')">${a.actualCount}</button></td>
+                    <td>${badge}</td><td>${a.arrivalFirm ?? "—"}</td><td>${arriveBtn}</td>`;
+            tbody.appendChild(tr);
+        });
+        document.getElementById("detail-card").scrollIntoView({ behavior: "smooth" });
+    }
+
+    async function markArrived(aggId, receiptId, series) {
+        const firm = prompt("Qaysi firma orqali prixod? (masalan: Avlod Farm)");
+        if (!firm) return;
+        const res = await fetch(API + "/aggregates/" + aggId + "/arrive", {
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ arrivalFirm: firm })
+        });
+        if (res.ok) loadAggregates(receiptId, series); else alert("Xato: " + res.status);
+    }
+
+    async function correctCount(aggId, current, receiptId, series) {
+        const val = prompt("Haqiqiy son (buzilgan karobka):", current);
+        if (val === null) return;
+        const newCount = parseInt(val);
+        if (isNaN(newCount)) { alert("Noto'g'ri son"); return; }
+        const res = await fetch(API + "/aggregates/" + aggId + "/correct-count", {
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ newCount })
+        });
+        if (res.ok) loadAggregates(receiptId, series); else alert("Xato: " + res.status);
+    }
+
+    // ---------- QOLDIQ ----------
+    async function loadStock() {
+        const res = await fetch(API + "/stock");
+        const data = await res.json();
+        const tbody = document.querySelector("#stock-table tbody");
+        tbody.innerHTML = "";
+        if (data.length === 0) tbody.innerHTML = '<tr><td colspan="6" class="empty">Hozircha qoldiq yo\'q</td></tr>';
+        data.forEach(s => {
+            const date = (s.expiryDate || "").substring(0, 10);
+            const badge = s.arrivalStatus === "arrived" ? '<span class="badge arrived">arrived</span>' : '<span class="badge queued">queued</span>';
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${s.productName}</td><td>${s.series}</td><td>${date}</td><td>${badge}</td><td>${s.boxCount}</td><td>${s.unitCount}</td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // ---------- INIT ----------
+    document.getElementById("r-codes").addEventListener("input", countCodes);
+    loadProducts();
+</script>
+</body>
+</html>

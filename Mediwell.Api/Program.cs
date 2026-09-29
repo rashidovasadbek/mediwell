@@ -20,6 +20,15 @@ builder.Services.AddScoped<AggregateRepository>();
 
 var connectionString = builder.Configuration.GetConnectionString("Default")
                        ?? throw new InvalidOperationException("Connection string 'Default' topilmadi.");
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.SetIsOriginAllowed(_ => true)  // har qanday localhost portga ruxsat (development)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
 // Migratsiya host qurilishidan oldin — baza tayyor bo'lmasa umuman ishga tushmaymiz.
 var upgrader = DeployChanges.To
@@ -49,8 +58,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-app.UseHttpsRedirection();
+app.UseCors();
+// Development'da https'ga yo'naltirmaymiz: frontend http://localhost:5048 ga uladi,
+// 307 redirect esa cross-origin so'rovni buzadi (sertifikat + CORS).
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 app.MapProductEndpoints();
 app.MapReceiptEndpoints();

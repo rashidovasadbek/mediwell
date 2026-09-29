@@ -12,4 +12,6 @@ public class StockItem
     public string ArrivalStatus { get; set; } = string.Empty;
     public long BoxCount { get; set; }
     public long UnitCount { get; set; }
+    
+    public string OfficialStatus { get; set; } = "cash";
 }

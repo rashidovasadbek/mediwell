@@ -1,4 +1,5 @@
 using Mediwell.Api.Data;
+using Mediwell.Api.Exceptions;
 using Mediwell.Api.Models;
 using Mediwell.Api.Repasitories;
 
@@ -45,6 +46,9 @@ public static class ReceiptEndpoints
             catch (InvalidOperationException ex)
             {
                 return Results.BadRequest(new { error = ex.Message });
+            }catch (DuplicateCodeException ex)
+            {
+                return Results.Conflict(new { error = ex.Message, duplicates = ex.Codes });
             }
         });
     }
