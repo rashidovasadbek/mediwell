@@ -1,7 +1,8 @@
 import axios from 'axios'
 
 const client = axios.create({
-    baseURL: 'http://localhost:5048',   // backend manzili
+    // Backend manzili: .env faylida VITE_API_URL (namuna: .env.example)
+    baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5048',
     headers: { 'Content-Type': 'application/json' }
 })
 

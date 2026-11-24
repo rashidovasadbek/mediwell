@@ -13,6 +13,14 @@ import Kodlar from '../views/Kodlar.vue'
 import { isLoggedIn, role, homeFor } from '../auth'
 import MediwellPrixod from '../views/MediwellPrixod.vue'
 
+// Sklad hisobi (markirovkasiz)
+import SkladHisobiLayout from '../layouts/SkladHisobiLayout.vue'
+import SkladQoldiq from '../views/sklad/SkladQoldiq.vue'
+import SkladKiritish from '../views/sklad/SkladKiritish.vue'
+import SkladJurnal from '../views/sklad/SkladJurnal.vue'
+import SkladDorilar from '../views/sklad/SkladDorilar.vue'
+import SkladBoshlangich from '../views/sklad/SkladBoshlangich.vue'
+
 const routes = [
     { path: '/', redirect: () => (isLoggedIn.value ? homeFor(role.value) : '/login') },
 
@@ -30,6 +38,18 @@ const routes = [
             { path: 'qoldiq', name: 'Qoldiq', component: Qoldiq },
             { path: 'preparatlar', name: 'Preparatlar', component: Preparatlar },
             { path: 'mediwell-prixod', name: 'MediwellPrixod', component: MediwellPrixod },
+            {
+                path: 'sklad',
+                component: SkladHisobiLayout,
+                children: [
+                    { path: '', redirect: '/admin/sklad/qoldiq' },
+                    { path: 'qoldiq', name: 'SkladQoldiq', component: SkladQoldiq },
+                    { path: 'kiritish', name: 'SkladKiritish', component: SkladKiritish },
+                    { path: 'jurnal', name: 'SkladJurnal', component: SkladJurnal },
+                    { path: 'dorilar', name: 'SkladDorilar', component: SkladDorilar },
+                    { path: 'boshlangich', name: 'SkladBoshlangich', component: SkladBoshlangich },
+                ],
+            },
         ],
     },
 
