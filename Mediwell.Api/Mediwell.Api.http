@@ -4,3 +4,133 @@ GET {{Mediwell.Api_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+
+# ============================================================
+#  SKLAD HISOBI (markirovkasiz)
+#  Guruhlar: 1 = MEDIWELL, 2 = ZEROMED, 3 = MW04JF
+# ============================================================
+
+### Guruhlar
+GET {{Mediwell.Api_HostAddress}}/stock-groups
+
+### Guruh qo'shish
+POST {{Mediwell.Api_HostAddress}}/stock-groups
+Content-Type: application/json
+
+{ "code": "NEWGRP", "name": "Yangi guruh", "sortOrder": 4, "active": true }
+
+### Guruhni tahrirlash
+PUT {{Mediwell.Api_HostAddress}}/stock-groups/3
+Content-Type: application/json
+
+{ "code": "MW04JF", "name": "MW-04 (JF)", "sortOrder": 3, "active": true }
+
+### Guruh dorilari (includeInactive=true — faolsizlari ham)
+GET {{Mediwell.Api_HostAddress}}/stock-products?groupId=1&includeInactive=false
+
+### Dori qo'shish
+POST {{Mediwell.Api_HostAddress}}/stock-products
+Content-Type: application/json
+
+{ "groupId": 1, "name": "Пеноксидант 100 мл", "perechPrice": 45000, "sortOrder": 1 }
+
+### Dorini tahrirlash (guruh o'zgarmaydi)
+PUT {{Mediwell.Api_HostAddress}}/stock-products/1
+Content-Type: application/json
+
+{ "name": "Пеноксидант 100 мл", "perechPrice": 46000, "sortOrder": 1, "active": true }
+
+### Dorini o'chirish (harakati bo'lsa — faolsizlantiriladi)
+DELETE {{Mediwell.Api_HostAddress}}/stock-products/1
+
+### Qoldiq (asOf ixtiyoriy — o'sha kun oxirigacha)
+GET {{Mediwell.Api_HostAddress}}/stock-balance?groupId=1&asOf=2026-11-25
+
+### Qoldiq Excel'ga
+GET {{Mediwell.Api_HostAddress}}/stock-balance/export?groupId=1
+
+### Harakatlar jurnali (hamma filtrlar ixtiyoriy)
+GET {{Mediwell.Api_HostAddress}}/stock-movements?groupId=1&type=sale_perech&from=2026-11-01&to=2026-11-30&search=samar&page=1&pageSize=50
+
+### Bitta harakat
+GET {{Mediwell.Api_HostAddress}}/stock-movements/1
+
+### Avtoto'ldirish: counterparty | region | agent
+GET {{Mediwell.Api_HostAddress}}/stock-movements/suggestions?field=counterparty&groupId=1
+
+### Bitta harakat qo'shish (ko'chirish: mediwell -> nal)
+POST {{Mediwell.Api_HostAddress}}/stock-movements
+Content-Type: application/json
+
+{
+  "movementDate": "2026-11-25", "groupId": 1, "productId": 1,
+  "movementType": "transfer", "fromWarehouse": "mediwell", "toWarehouse": "nal",
+  "qty": 20, "note": "Naqdga o'tkazildi"
+}
+
+### Hujjat: Переч sotuv (narx bo'sh bo'lsa — dorining Переч narxi)
+POST {{Mediwell.Api_HostAddress}}/stock-movements/batch
+Content-Type: application/json
+
+{
+  "movementDate": "2026-11-25", "groupId": 1, "movementType": "sale_perech",
+  "counterparty": "Dori-Darmon", "region": "Samarqand",
+  "lines": [
+    { "productId": 1, "qty": 100 },
+    { "productId": 2, "qty": 10, "price": 52000 }
+  ]
+}
+
+### Hujjat: Нал sotuv
+POST {{Mediwell.Api_HostAddress}}/stock-movements/batch
+Content-Type: application/json
+
+{
+  "movementDate": "2026-11-25", "groupId": 1, "movementType": "sale_nal",
+  "region": "Toshkent", "agent": "Aliyev",
+  "lines": [ { "productId": 1, "qty": 5 } ]
+}
+
+### Hujjat: Kirim (toWarehouse: nal | mediwell)
+POST {{Mediwell.Api_HostAddress}}/stock-movements/batch
+Content-Type: application/json
+
+{
+  "movementDate": "2026-11-25", "groupId": 1, "movementType": "receipt", "toWarehouse": "mediwell",
+  "lines": [ { "productId": 1, "qty": 500 }, { "productId": 2, "qty": 200 } ]
+}
+
+### Hujjat: Spisanie (fromWarehouse: nal | mediwell)
+POST {{Mediwell.Api_HostAddress}}/stock-movements/batch
+Content-Type: application/json
+
+{
+  "movementDate": "2026-11-25", "groupId": 1, "movementType": "write_off", "fromWarehouse": "nal",
+  "note": "Muddati o'tgan",
+  "lines": [ { "productId": 1, "qty": 3 } ]
+}
+
+### Boshlang'ich qoldiq (guruhdagi eski opening'lar almashtiriladi; 0/0 qatorlar o'tkazib yuboriladi)
+POST {{Mediwell.Api_HostAddress}}/stock-movements/opening
+Content-Type: application/json
+
+{
+  "groupId": 1, "movementDate": "2026-11-01",
+  "lines": [
+    { "productId": 1, "nal": 120, "mediwell": 12089 },
+    { "productId": 2, "nal": 0, "mediwell": 50 }
+  ]
+}
+
+### Harakatni tahrirlash (guruh va tur o'zgarmaydi)
+PUT {{Mediwell.Api_HostAddress}}/stock-movements/1
+Content-Type: application/json
+
+{
+  "movementDate": "2026-11-25", "productId": 1,
+  "fromWarehouse": "mediwell", "toWarehouse": "nal",
+  "qty": 25, "note": "tuzatildi"
+}
+
+### Harakatni o'chirish (soft delete)
+DELETE {{Mediwell.Api_HostAddress}}/stock-movements/1

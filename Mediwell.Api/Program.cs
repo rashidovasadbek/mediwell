@@ -17,6 +17,8 @@ builder.Services.AddScoped<ProductRepository>();
 builder.Services.AddScoped<ReceiptRepository>();
 builder.Services.AddScoped<StockRepository>();
 builder.Services.AddScoped<AggregateRepository>();
+builder.Services.AddScoped<StockProductRepository>();
+builder.Services.AddScoped<StockLedgerRepository>();
 
 var connectionString = builder.Configuration.GetConnectionString("Default")
                        ?? throw new InvalidOperationException("Connection string 'Default' topilmadi.");
@@ -72,6 +74,7 @@ app.MapProductEndpoints();
 app.MapReceiptEndpoints();
 app.MapStockEndpoints();
 app.MapAggregateEndpoints();
+app.MapStockLedgerEndpoints();
 
 app.Run();
 return 0;
