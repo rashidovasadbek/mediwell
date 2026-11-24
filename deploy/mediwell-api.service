@@ -1,0 +1,22 @@
+# /etc/systemd/system/mediwell-api.service
+[Unit]
+Description=Mediwell API (.NET 8)
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=asadbek
+WorkingDirectory=/opt/mediwell/api
+ExecStart=/usr/bin/dotnet /opt/mediwell/api/Mediwell.Api.dll --urls http://127.0.0.1:5048
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+Environment=DOTNET_CLI_TELEMETRY_OPTOUT=1
+Restart=always
+RestartSec=5
+KillSignal=SIGINT
+TimeoutStopSec=20
+SyslogIdentifier=mediwell-api
+
+[Install]
+WantedBy=multi-user.target

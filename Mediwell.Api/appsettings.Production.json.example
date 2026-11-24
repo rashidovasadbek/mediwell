@@ -1,0 +1,22 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "mediwell.uz;www.mediwell.uz;localhost;127.0.0.1",
+  "ConnectionStrings": {
+    "Default": "Host=127.0.0.1;Port=5432;Database=mediwell_prod;Username=mediwell_prod;Password=CHANGE_ME"
+  },
+  "Auth": {
+    "JwtKey": "CHANGE_ME_kamida_32_belgili_tasodifiy_kalit",
+    "Issuer": "mediwell",
+    "TokenHours": 12,
+    "BootstrapAdmin": {
+      "Login": "admin",
+      "Password": "CHANGE_ME_birinchi_ishga_tushgandan_keyin_olib_tashlang",
+      "FullName": "Administrator"
+    }
+  }
+}

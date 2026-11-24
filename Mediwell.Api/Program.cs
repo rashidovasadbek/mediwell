@@ -1,3 +1,4 @@
+using System.Net;
 using System.Reflection;
 using System.Threading.RateLimiting;
 using Dapper;
@@ -9,6 +10,7 @@ using Mediwell.Api.Repasitories;
 using Mediwell.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -87,7 +89,7 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.SetIsOriginAllowed(_ => true)  // har qanday localhost portga ruxsat (development)
+        policy.SetIsOriginAllowed(_ => true)  // faqat Development'da ishlatiladi (UseCors pastda)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -116,6 +118,17 @@ Console.ResetColor();
 
 var app = builder.Build();
 
+// Nginx orqasida: haqiqiy mijoz IP'si (rate limit uchun) va sxema (https) — faqat localhost proxy'ga ishonamiz
+var forwarded = new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+};
+forwarded.KnownNetworks.Clear();
+forwarded.KnownProxies.Clear();
+forwarded.KnownProxies.Add(IPAddress.Loopback);
+forwarded.KnownProxies.Add(IPAddress.IPv6Loopback);
+app.UseForwardedHeaders(forwarded);
+
 // Login qila oladigan admin bo'lmasa — Auth:BootstrapAdmin dan yaratiladi
 using (var scope = app.Services.CreateScope())
 {
@@ -123,24 +136,38 @@ using (var scope = app.Services.CreateScope())
         .EnsureBootstrapAdminAsync(app.Logger);
 }
 
+// Development: Swagger, CORS (Vite boshqa portda), eski wwwroot sinov sahifasi.
+// Production: SSL'ni Nginx qiladi (https redirect yo'q), panel va API bitta domenda (CORS kerak emas),
+// wwwroot berilmaydi.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseCors();
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
 }
-app.UseCors();
-// Development'da https'ga yo'naltirmaymiz: frontend http://localhost:5048 ga uladi,
-// 307 redirect esa cross-origin so'rovni buzadi (sertifikat + CORS).
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
-app.UseDefaultFiles();
-app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
+
+// GET /health — servis va baza holati (deploy.sh tekshiradi). Login talab qilmaydi.
+app.MapGet("/health", async (DbConnectionFactory db) =>
+{
+    var dbOk = false;
+    try
+    {
+        using var conn = db.Create();
+        dbOk = await conn.ExecuteScalarAsync<int>("SELECT 1") == 1;
+    }
+    catch
+    {
+        // baza ulanmadi — dbOk = false
+    }
+    return Results.Json(new { status = dbOk ? "ok" : "error", db = dbOk },
+        statusCode: dbOk ? StatusCodes.Status200OK : StatusCodes.Status503ServiceUnavailable);
+}).AllowAnonymous();
 
 app.MapAuthEndpoints();
 

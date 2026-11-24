@@ -19,6 +19,11 @@
     <EmbeddedResource Include="Migrations\*.sql" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Maxfiy sozlamalar publish papkasiga ko'chmaydi va serverdagisini ustidan yozmaydi -->
+    <Content Update="appsettings.Development.json;appsettings.Production.json" CopyToPublishDirectory="Never" />
+    <None Update="appsettings.Production.json.example" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+  <ItemGroup>
     <Folder Include="Services\" />
   </ItemGroup>
 </Project>
