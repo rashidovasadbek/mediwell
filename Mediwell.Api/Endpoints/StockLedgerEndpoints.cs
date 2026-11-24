@@ -1,8 +1,10 @@
+using System.Security.Claims;
 using ClosedXML.Excel;
 using Mediwell.Api.Data;
 using Mediwell.Api.Exceptions;
 using Mediwell.Api.Models;
 using Mediwell.Api.Repasitories;
+using Mediwell.Api.Services;
 
 namespace Mediwell.Api.Endpoints;
 
@@ -43,7 +45,7 @@ public static class StockLedgerEndpoints
     // ---------------- /stock-groups ----------------
     private static void MapGroups(WebApplication app)
     {
-        var g = app.MapGroup("/stock-groups");
+        var g = app.MapGroup("/stock-groups").RequireAuthorization(Roles.Admin);
 
         g.MapGet("/", async (StockProductRepository repo) => Results.Ok(await repo.GetGroupsAsync()));
 
@@ -68,7 +70,7 @@ public static class StockLedgerEndpoints
     // ---------------- /stock-products ----------------
     private static void MapProducts(WebApplication app)
     {
-        var g = app.MapGroup("/stock-products");
+        var g = app.MapGroup("/stock-products").RequireAuthorization(Roles.Admin);
 
         g.MapGet("/", async (long? groupId, bool? includeInactive, StockProductRepository repo) =>
             Results.Ok(await repo.GetProductsAsync(groupId, includeInactive ?? false)));
@@ -109,7 +111,7 @@ public static class StockLedgerEndpoints
     // ---------------- /stock-balance ----------------
     private static void MapBalance(WebApplication app)
     {
-        var g = app.MapGroup("/stock-balance");
+        var g = app.MapGroup("/stock-balance").RequireAuthorization(Roles.Admin);
 
         g.MapGet("/", async (long? groupId, DateOnly? asOf, StockLedgerRepository repo) =>
         {
@@ -176,7 +178,7 @@ public static class StockLedgerEndpoints
     // ---------------- /stock-movements ----------------
     private static void MapMovements(WebApplication app)
     {
-        var g = app.MapGroup("/stock-movements");
+        var g = app.MapGroup("/stock-movements").RequireAuthorization(Roles.Admin);
 
         g.MapGet("/", async (long? groupId, long? productId, string? type, DateOnly? from, DateOnly? to,
             string? search, int? page, int? pageSize, StockLedgerRepository repo) =>
@@ -203,27 +205,27 @@ public static class StockLedgerEndpoints
             return m is null ? Results.NotFound(new { error = $"Harakat topilmadi: id={id}" }) : Results.Ok(m);
         });
 
-        g.MapPost("/", (CreateStockMovementRequest req, StockLedgerRepository repo) => Safe(async () =>
+        g.MapPost("/", (CreateStockMovementRequest req, ClaimsPrincipal user, StockLedgerRepository repo) => Safe(async () =>
         {
             var errors = req.Validate();
             if (errors.Count > 0) return Results.BadRequest(new { errors });
-            var id = await repo.CreateAsync(req);
+            var id = await repo.CreateAsync(req, user.UserId());
             return Results.Created($"/stock-movements/{id}", new { id });
         }));
 
-        g.MapPost("/batch", (StockMovementBatchRequest req, StockLedgerRepository repo) => Safe(async () =>
+        g.MapPost("/batch", (StockMovementBatchRequest req, ClaimsPrincipal user, StockLedgerRepository repo) => Safe(async () =>
         {
             var errors = req.Validate();
             if (errors.Count > 0) return Results.BadRequest(new { errors });
-            var (docNo, ids) = await repo.CreateBatchAsync(req);
+            var (docNo, ids) = await repo.CreateBatchAsync(req, user.UserId());
             return Results.Ok(new { docNo, ids, count = ids.Count });
         }));
 
-        g.MapPost("/opening", (OpeningRequest req, StockLedgerRepository repo) => Safe(async () =>
+        g.MapPost("/opening", (OpeningRequest req, ClaimsPrincipal user, StockLedgerRepository repo) => Safe(async () =>
         {
             var errors = req.Validate();
             if (errors.Count > 0) return Results.BadRequest(new { errors });
-            var (docNo, inserted, replaced) = await repo.SaveOpeningAsync(req);
+            var (docNo, inserted, replaced) = await repo.SaveOpeningAsync(req, user.UserId());
             return Results.Ok(new { docNo, inserted, replaced });
         }));
 

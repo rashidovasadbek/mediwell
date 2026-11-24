@@ -57,7 +57,7 @@ const routes = [
     {
         path: '/sklad',
         component: SkladLayout,
-        meta: { role: 'skladchi' },
+        meta: { role: 'warehouse' },
         children: [
             { path: '', redirect: '/sklad/chiqim' },
             { path: 'chiqim', name: 'Chiqim', component: Chiqim },

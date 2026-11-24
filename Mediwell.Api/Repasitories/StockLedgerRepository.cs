@@ -134,7 +134,7 @@ public class StockLedgerRepository
     //  Yozish
     // ============================================================
 
-    public async Task<long> CreateAsync(CreateStockMovementRequest req)
+    public async Task<long> CreateAsync(CreateStockMovementRequest req, long? createdBy)
     {
         await using var conn = (NpgsqlConnection)_db.Create();
         await conn.OpenAsync();
@@ -152,13 +152,13 @@ public class StockLedgerRepository
             req.MovementDate, req.GroupId, req.ProductId, req.MovementType,
             req.FromWarehouse, req.ToWarehouse, req.Qty, price,
             StockRules.Clean(req.Counterparty), StockRules.Clean(req.Region), StockRules.Clean(req.Agent),
-            null, StockRules.Clean(req.Note)));
+            null, StockRules.Clean(req.Note), createdBy));
 
         await tx.CommitAsync();
         return id;
     }
 
-    public async Task<(string DocNo, List<long> Ids)> CreateBatchAsync(StockMovementBatchRequest req)
+    public async Task<(string DocNo, List<long> Ids)> CreateBatchAsync(StockMovementBatchRequest req, long? createdBy)
     {
         await using var conn = (NpgsqlConnection)_db.Create();
         await conn.OpenAsync();
@@ -188,7 +188,7 @@ public class StockLedgerRepository
                 req.MovementDate, req.GroupId, l.ProductId, req.MovementType,
                 req.FromWarehouse, req.ToWarehouse, l.Qty, prices[i],
                 StockRules.Clean(req.Counterparty), StockRules.Clean(req.Region), StockRules.Clean(req.Agent),
-                docNo, StockRules.Clean(l.Note) ?? StockRules.Clean(req.Note))));
+                docNo, StockRules.Clean(l.Note) ?? StockRules.Clean(req.Note), createdBy)));
         }
 
         await tx.CommitAsync();
@@ -196,7 +196,7 @@ public class StockLedgerRepository
     }
 
     // Guruhdagi eski opening'lar o'chiriladi (soft), yangilari yoziladi.
-    public async Task<(string? DocNo, int Inserted, int Replaced)> SaveOpeningAsync(OpeningRequest req)
+    public async Task<(string? DocNo, int Inserted, int Replaced)> SaveOpeningAsync(OpeningRequest req, long? createdBy)
     {
         await using var conn = (NpgsqlConnection)_db.Create();
         await conn.OpenAsync();
@@ -246,7 +246,7 @@ public class StockLedgerRepository
                     if (qty <= 0) continue;
                     await InsertAsync(conn, tx, new InsertRow(
                         req.MovementDate, req.GroupId, l.ProductId, StockRules.Opening,
-                        null, wh, qty, null, null, null, null, docNo, note));
+                        null, wh, qty, null, null, null, null, docNo, note, createdBy));
                     inserted++;
                 }
             }
@@ -341,7 +341,7 @@ public class StockLedgerRepository
     private record InsertRow(
         DateOnly MovementDate, long GroupId, long ProductId, string MovementType,
         string? FromWarehouse, string? ToWarehouse, int Qty, decimal? Price,
-        string? Counterparty, string? Region, string? Agent, string? DocNo, string? Note);
+        string? Counterparty, string? Region, string? Agent, string? DocNo, string? Note, long? CreatedBy);
 
     private class ProductInfo
     {
@@ -458,10 +458,10 @@ public class StockLedgerRepository
         conn.ExecuteScalarAsync<long>(@"
             INSERT INTO stock_movement
                 (movement_date, group_id, product_id, movement_type, from_warehouse, to_warehouse,
-                 qty, price, counterparty, region, agent, doc_no, note)
+                 qty, price, counterparty, region, agent, doc_no, note, created_by)
             VALUES
                 (@MovementDate, @GroupId, @ProductId, @MovementType, @FromWarehouse, @ToWarehouse,
-                 @Qty, @Price, @Counterparty, @Region, @Agent, @DocNo, @Note)
+                 @Qty, @Price, @Counterparty, @Region, @Agent, @DocNo, @Note, @CreatedBy)
             RETURNING id", r, tx);
 
     private static readonly NumberFormatInfo SpaceGroup = new() { NumberGroupSeparator = " " };

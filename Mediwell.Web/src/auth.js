@@ -1,51 +1,41 @@
 import { reactive, computed } from 'vue'
+import client from './api/client'
+import { readSession, writeSession } from './api/token'
 
-// DIQQAT: hozircha backendda auth yo'q — login faqat frontendda.
-// Backend /auth/login tayyor bo'lganda shu faylni almashtirish kifoya.
-const USERS = [
-    { username: 'admin', password: 'admin123', role: 'admin', fullName: 'Administrator' },
-    { username: 'sklad', password: 'sklad123', role: 'skladchi', fullName: 'Skladchi' },
-]
-
-const STORAGE_KEY = 'mediwell_user'
-
-function readStored() {
-    try {
-        const raw = localStorage.getItem(STORAGE_KEY)
-        if (!raw) return null
-        const u = JSON.parse(raw)
-        return u && u.role ? u : null
-    } catch {
-        return null
-    }
-}
-
+// Login backend orqali: POST /auth/login → JWT token (muddati: Auth:TokenHours)
 const state = reactive({
-    user: readStored(),
+    session: readSession(),   // { token, expiresAt, user: { id, login, fullName, role } }
 })
 
-export const currentUser = computed(() => state.user)
-export const isLoggedIn = computed(() => state.user !== null)
-export const role = computed(() => state.user?.role ?? null)
+export const currentUser = computed(() => state.session?.user ?? null)
+export const isLoggedIn = computed(() => state.session !== null)
+export const role = computed(() => state.session?.user?.role ?? null)
 
 // Rol uchun bosh sahifa
 export function homeFor(r) {
     return r === 'admin' ? '/admin/kirim' : '/sklad/chiqim'
 }
 
-export function login(username, password) {
-    const found = USERS.find(
-        u => u.username === String(username).trim().toLowerCase() && u.password === password
-    )
-    if (!found) return { ok: false, error: 'Login yoki parol noto\'g\'ri' }
-
-    const user = { username: found.username, role: found.role, fullName: found.fullName }
-    state.user = user
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(user))
-    return { ok: true, user }
+export async function login(username, password) {
+    try {
+        const { data } = await client.post('/auth/login', {
+            login: String(username).trim(),
+            password,
+        })
+        state.session = { token: data.token, expiresAt: data.expiresAt, user: data.user }
+        writeSession(state.session)
+        return { ok: true, user: data.user }
+    } catch (e) {
+        const status = e?.response?.status
+        const error = status === 401 ? "Login yoki parol noto'g'ri"
+            : status === 429 ? "Juda ko'p urinish. Bir daqiqadan keyin qayta urinib ko'ring"
+            : e?.response ? `Server xatosi (${status})`
+            : "Server bilan aloqa yo'q"
+        return { ok: false, error }
+    }
 }
 
 export function logout() {
-    state.user = null
-    localStorage.removeItem(STORAGE_KEY)
+    state.session = null
+    writeSession(null)
 }

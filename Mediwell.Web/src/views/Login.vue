@@ -10,12 +10,12 @@ const route = useRoute()
 const form = ref({ username: '', password: '' })
 const loading = ref(false)
 
-function submit() {
+async function submit() {
     if (!form.value.username) return ElMessage.warning('Login kiriting')
     if (!form.value.password) return ElMessage.warning('Parol kiriting')
 
     loading.value = true
-    const res = login(form.value.username, form.value.password)
+    const res = await login(form.value.username, form.value.password)
     loading.value = false
 
     if (!res.ok) {
@@ -39,7 +39,7 @@ function submit() {
 
             <el-form label-position="top" @submit.prevent>
                 <el-form-item label="Login">
-                    <el-input v-model="form.username" size="large" placeholder="admin yoki sklad"
+                    <el-input v-model="form.username" size="large" placeholder="Login"
                         autocomplete="username" @keyup.enter="submit" />
                 </el-form-item>
 
@@ -53,10 +53,6 @@ function submit() {
                 Kirish
             </el-button>
 
-            <div class="hint">
-                <div><b>Admin:</b> admin / admin123</div>
-                <div><b>Skladchi:</b> sklad / sklad123</div>
-            </div>
         </div>
     </div>
 </template>
@@ -95,13 +91,4 @@ function submit() {
     margin-top: 4px;
 }
 .submit { width: 100%; margin-top: 4px; }
-.hint {
-    margin-top: 20px;
-    padding-top: 14px;
-    border-top: 1px dashed #e2ecec;
-    font-size: 12px;
-    color: #7d9294;
-    line-height: 1.7;
-    text-align: center;
-}
 </style>

@@ -1,4 +1,6 @@
 @Mediwell.Api_HostAddress = http://localhost:5048
+# Avval "Login" so'rovini yuboring va javobdagi token'ni shu yerga qo'ying:
+@token = PASTE_TOKEN_HERE
 
 GET {{Mediwell.Api_HostAddress}}/weatherforecast/
 Accept: application/json
@@ -12,54 +14,67 @@ Accept: application/json
 
 ### Guruhlar
 GET {{Mediwell.Api_HostAddress}}/stock-groups
+Authorization: Bearer {{token}}
 
 ### Guruh qo'shish
 POST {{Mediwell.Api_HostAddress}}/stock-groups
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "code": "NEWGRP", "name": "Yangi guruh", "sortOrder": 4, "active": true }
 
 ### Guruhni tahrirlash
 PUT {{Mediwell.Api_HostAddress}}/stock-groups/3
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "code": "MW04JF", "name": "MW-04 (JF)", "sortOrder": 3, "active": true }
 
 ### Guruh dorilari (includeInactive=true — faolsizlari ham)
 GET {{Mediwell.Api_HostAddress}}/stock-products?groupId=1&includeInactive=false
+Authorization: Bearer {{token}}
 
 ### Dori qo'shish
 POST {{Mediwell.Api_HostAddress}}/stock-products
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "groupId": 1, "name": "Пеноксидант 100 мл", "perechPrice": 45000, "sortOrder": 1 }
 
 ### Dorini tahrirlash (guruh o'zgarmaydi)
 PUT {{Mediwell.Api_HostAddress}}/stock-products/1
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 { "name": "Пеноксидант 100 мл", "perechPrice": 46000, "sortOrder": 1, "active": true }
 
 ### Dorini o'chirish (harakati bo'lsa — faolsizlantiriladi)
 DELETE {{Mediwell.Api_HostAddress}}/stock-products/1
+Authorization: Bearer {{token}}
 
 ### Qoldiq (asOf ixtiyoriy — o'sha kun oxirigacha)
 GET {{Mediwell.Api_HostAddress}}/stock-balance?groupId=1&asOf=2026-11-25
+Authorization: Bearer {{token}}
 
 ### Qoldiq Excel'ga
 GET {{Mediwell.Api_HostAddress}}/stock-balance/export?groupId=1
+Authorization: Bearer {{token}}
 
 ### Harakatlar jurnali (hamma filtrlar ixtiyoriy)
 GET {{Mediwell.Api_HostAddress}}/stock-movements?groupId=1&type=sale_perech&from=2026-11-01&to=2026-11-30&search=samar&page=1&pageSize=50
+Authorization: Bearer {{token}}
 
 ### Bitta harakat
 GET {{Mediwell.Api_HostAddress}}/stock-movements/1
+Authorization: Bearer {{token}}
 
 ### Avtoto'ldirish: counterparty | region | agent
 GET {{Mediwell.Api_HostAddress}}/stock-movements/suggestions?field=counterparty&groupId=1
+Authorization: Bearer {{token}}
 
 ### Bitta harakat qo'shish (ko'chirish: mediwell -> nal)
 POST {{Mediwell.Api_HostAddress}}/stock-movements
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -70,6 +85,7 @@ Content-Type: application/json
 
 ### Hujjat: Переч sotuv (narx bo'sh bo'lsa — dorining Переч narxi)
 POST {{Mediwell.Api_HostAddress}}/stock-movements/batch
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -83,6 +99,7 @@ Content-Type: application/json
 
 ### Hujjat: Нал sotuv
 POST {{Mediwell.Api_HostAddress}}/stock-movements/batch
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -93,6 +110,7 @@ Content-Type: application/json
 
 ### Hujjat: Kirim (toWarehouse: nal | mediwell)
 POST {{Mediwell.Api_HostAddress}}/stock-movements/batch
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -102,6 +120,7 @@ Content-Type: application/json
 
 ### Hujjat: Spisanie (fromWarehouse: nal | mediwell)
 POST {{Mediwell.Api_HostAddress}}/stock-movements/batch
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -112,6 +131,7 @@ Content-Type: application/json
 
 ### Boshlang'ich qoldiq (guruhdagi eski opening'lar almashtiriladi; 0/0 qatorlar o'tkazib yuboriladi)
 POST {{Mediwell.Api_HostAddress}}/stock-movements/opening
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -124,6 +144,7 @@ Content-Type: application/json
 
 ### Harakatni tahrirlash (guruh va tur o'zgarmaydi)
 PUT {{Mediwell.Api_HostAddress}}/stock-movements/1
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
@@ -134,3 +155,44 @@ Content-Type: application/json
 
 ### Harakatni o'chirish (soft delete)
 DELETE {{Mediwell.Api_HostAddress}}/stock-movements/1
+Authorization: Bearer {{token}}
+
+# ============================================================
+#  AUTH
+#  Birinchi admin: appsettings.*.json -> Auth:BootstrapAdmin (bazada admin bo'lmasa yaratiladi)
+# ============================================================
+
+### Login (token olish) — parol appsettings.Development.json dagi Auth:BootstrapAdmin:Password
+POST {{Mediwell.Api_HostAddress}}/auth/login
+Content-Type: application/json
+
+{ "login": "admin", "password": "..." }
+
+### Joriy foydalanuvchi
+GET {{Mediwell.Api_HostAddress}}/auth/me
+Authorization: Bearer {{token}}
+
+### O'z parolini almashtirish (kamida 8 belgi)
+POST {{Mediwell.Api_HostAddress}}/auth/change-password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "currentPassword": "...", "newPassword": "..." }
+
+### Foydalanuvchilar (faqat admin)
+GET {{Mediwell.Api_HostAddress}}/users
+Authorization: Bearer {{token}}
+
+### Skladchi yaratish (rollar: admin, warehouse, accountant, manager, mp)
+POST {{Mediwell.Api_HostAddress}}/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "login": "sklad", "fullName": "Skladchi", "role": "warehouse", "active": true, "password": "..." }
+
+### Foydalanuvchini tahrirlash (password bo'sh/yo'q bo'lsa — o'zgarmaydi)
+PUT {{Mediwell.Api_HostAddress}}/users/2
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "login": "sklad", "fullName": "Skladchi", "role": "warehouse", "active": true }

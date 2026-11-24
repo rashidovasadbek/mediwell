@@ -90,6 +90,7 @@ export function errText(e) {
         if (Array.isArray(data.errors) && data.errors.length) return data.errors.join('\n')
         if (data.error) return data.error
     }
+    if (e?.response?.status === 403) return "Bu amal uchun ruxsat yo'q"
     if (e?.response?.status) return `Server xatosi (${e.response.status})`
     return "Server bilan aloqa yo'q"
 }
